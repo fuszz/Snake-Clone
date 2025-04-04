@@ -1,0 +1,29 @@
+body {
+
+}
+
+#main {
+    margin: auto;
+
+    display: flex;
+    gap: 20px;
+    flex-direction: column;
+}
+
+#banner{
+    width: 642px;
+    height: 52px;
+    line-height: 50px;
+    margin: auto;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid black;
+}
+
+#gameContainer {
+    width: 800px;
+    height: 800px;
+    margin: auto;
+    background-color: green;
+}
+
