@@ -6,9 +6,10 @@ function cell(x, y, direction) {
 }
 
 let snake = {
-    headPosition : cell(400, 400, "R"),
-    length: 10,
-    snakeArray: [cell(400, 400)],
+    headCell : cell(400, 400, "R"),
+
+    length: 3,
+    snakeArray: [cell(400, 400, "R")],
     color: 'rgba(255, 0, 0, 1)',
     direction: "R",
 }
@@ -30,7 +31,7 @@ let game = {
     points: 0,
 
     speed: 10,
-    lastRefreshed: 0,
+    cacheDirection: "R",
 }
 
 function init() {
@@ -48,7 +49,8 @@ function init() {
 
 
 function drawSnake() {
-    game.context.fillStyle = snake.color;
+    game.context.fillStyle = 'rgb(255, 0, 0)';
+    game.context.fillRect(snake.headCell.x, snake.headCell.y, 20, 20);
     snake.snakeArray.forEach((element, index) => {
         game.context.fillRect(element.x, element.y, 20, 20);
     })
@@ -61,50 +63,52 @@ function redraw() {
 }
 
 function calculateNewHeadPosition(step){
-    switch(snake.headPosition.direction){
+    switch(snake.headCell.direction){
         case "R":
-            snake.headPosition.x += step;
+            snake.headCell.x += step;
             break;
 
         case "U":
-            snake.headPosition.y -= step;
+            snake.headCell.y -= step;
             break;
 
         case "L":
-            snake.headPosition.x -= step;
+            snake.headCell.x -= step;
             break;
 
         case "D":
-            snake.headPosition.y += step;
+            snake.headCell.y += step;
             break;
     }
 }
 
-function calculateNewTailPosition(step){
-    switch(snake.snakeArray[snake.length-1].direction){
-        case "R":
-            snake.snakeArray[snake.length-1].x += step;
-            break;
+function calculateNewTailPosition(step) {
+    if (snake.snakeArray[snake.length - 1]) {
+        switch (snake.snakeArray[snake.length - 1].direction) {
+            case "R":
+                snake.snakeArray[snake.length - 1].x += step;
+                break;
 
-        case "U":
-            snake.snakeArray[snake.length-1].y -= step;
-            break;
+            case "U":
+                snake.snakeArray[snake.length - 1].y -= step;
+                break;
 
-        case "L":
-            snake.snakeArray[snake.length-1].x -= step;
-            break;
+            case "L":
+                snake.snakeArray[snake.length - 1].x -= step;
+                break;
 
-        case "D":
-            snake.snakeArray[snake.length-1].y += step;
-            break;
+            case "D":
+                snake.snakeArray[snake.length - 1].y += step;
+                break;
+        }
     }
 }
 
 function checkGameOver(){
-    if (snake.headPosition.x >= ((game.boardWidth - 1) * 20) || snake.headPosition.x < 0) {
+    if (snake.headCell.x > ((game.boardWidth - 1) * 20) || snake.headCell.x < 0) {
         return true;
     }
-    if (snake.headPosition.y >= ((game.boardHeight - 1) * 20) || snake.headPosition.y < 0 ) {
+    if (snake.headCell.y > ((game.boardHeight - 1) * 20) || snake.headCell.y < 0 ) {
         return true;
     }
 //     TODO add self-eating game Over
@@ -116,10 +120,10 @@ function gameOver(){
 }
 
 function changeDirection(direction){
-    if (direction === "L" && snake.direction !== "R") snake.direction = direction;
-    if (direction === "R" && snake.direction !== "L") snake.direction = direction;
-    if (direction === "U" && snake.direction !== "D") snake.direction = direction;
-    if (direction === "D" && snake.direction !== "U") snake.direction = direction;
+    if (direction === "L" && game.cacheDirection !== "R") game.cacheDirection = direction;
+    if (direction === "R" && game.cacheDirection !== "L") game.cacheDirection = direction;
+    if (direction === "U" && game.cacheDirection !== "D") game.cacheDirection = direction;
+    if (direction === "D" && game.cacheDirection !== "U") game.cacheDirection = direction;
 }
 
 function animate(step){
@@ -128,39 +132,35 @@ function animate(step){
     redraw();
 }
 
-function fullPosition(step){
+function fullPosition(){
     if (checkGameOver()){
         gameOver();
         return;
     }
-
+    snake.headCell.direction = game.cacheDirection;
+    snake.headCell.direction = game.cacheDirection;
+    if(snake.length === 1) return;
+    snake.snakeArray.unshift({...snake.headCell});
+    if(snake.snakeArray.length > snake.length){
+        snake.snakeArray.pop();
+    }
 }
 
 function gameLoop() {
-    let step = 4;
-    if (snake.headPosition.x % 20 === 0 && snake.headPosition.y % 20 === 0){
-        fullPosition(step);
+    if (game.gameOver) return;
+    let step = 2;
+    if (snake.headCell.x % 20 === 0 && snake.headCell.y % 20 === 0){
+        fullPosition();
         animate(step);
     }
     else animate(step);
-
-    console.log("Step: " + step);
-    calculateNewHeadPosition(step);
-
-
-    snake.snakeArray.unshift({ ...snake.headPosition });
-    console.log(snake.headPosition);
-    if (snake.snakeArray.length > snake.length){
-        snake.snakeArray.pop();
-    }
-
 }
 
 async function keyListener(e) {
-    if (!game.gameInitiated && !game.gameOver) {
+    if (!game.gameInitiated) {
         game.banner.innerText = "Press any arrow key to start the game";
         game.gameInitiated = true;
-        windows.setInterval(gameLoop, 10);
+        window.setInterval(gameLoop, 10);
     }
     switch (e.keyCode) {
         case 37: // left arrow
